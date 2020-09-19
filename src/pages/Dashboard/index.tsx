@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Image, ScrollView } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
+import {
+  createNavigatorFactory,
+  useNavigation,
+} from '@react-navigation/native';
 import Logo from '../../assets/logo-header.png';
 import SearchInput from '../../components/SearchInput';
 
@@ -31,8 +34,10 @@ import {
 interface Food {
   id: number;
   name: string;
+  nameLowerCase: string;
   description: string;
   price: number;
+  category: number;
   thumbnail_url: string;
   formattedPrice: string;
 }
@@ -54,12 +59,46 @@ const Dashboard: React.FC = () => {
   const navigation = useNavigation();
 
   async function handleNavigate(id: number): Promise<void> {
-    // Navigate do ProductDetails page
+    navigation.navigate('FoodDetails', { id });
   }
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // Load Foods from API
+      const response = await api.get('/foods');
+
+      const foodsFormatted = response.data.map((food: Food) => {
+        return {
+          ...food,
+          formattedPrice: formatValue(food.price),
+        };
+      });
+
+      if (searchValue.length > 0 && selectedCategory === undefined) {
+        setFoods(
+          foodsFormatted
+            .map((foodMap: Food) => {
+              return {
+                ...foodMap,
+                nameLowerCase: foodMap.name.toLowerCase(),
+              };
+            })
+            .filter((foodFilter: Food) =>
+              foodFilter.nameLowerCase.includes(searchValue.toLowerCase()),
+            ),
+        );
+        return;
+      }
+
+      if (selectedCategory !== undefined) {
+        setFoods(
+          foodsFormatted.filter(
+            (foodFilter: Food) => foodFilter.category === selectedCategory,
+          ),
+        );
+        return;
+      }
+
+      setFoods(foodsFormatted);
     }
 
     loadFoods();
@@ -67,14 +106,20 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadCategories(): Promise<void> {
-      // Load categories from API
+      const response = await api.get('/categories');
+
+      setCategories(response.data);
     }
 
     loadCategories();
   }, []);
 
   function handleSelectCategory(id: number): void {
-    // Select / deselect category
+    if (selectedCategory === undefined) {
+      setSelectedCategory(id);
+    } else {
+      setSelectedCategory(undefined);
+    }
   }
 
   return (
