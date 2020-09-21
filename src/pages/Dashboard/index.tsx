@@ -34,7 +34,6 @@ import {
 interface Food {
   id: number;
   name: string;
-  nameLowerCase: string;
   description: string;
   price: number;
   category: number;
@@ -64,41 +63,21 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      const response = await api.get('/foods');
-
-      const foodsFormatted = response.data.map((food: Food) => {
-        return {
-          ...food,
-          formattedPrice: formatValue(food.price),
-        };
+      const response = await api.get('/foods', {
+        params: {
+          category_like: selectedCategory,
+          name_like: searchValue,
+        },
       });
 
-      if (searchValue.length > 0 && selectedCategory === undefined) {
-        setFoods(
-          foodsFormatted
-            .map((foodMap: Food) => {
-              return {
-                ...foodMap,
-                nameLowerCase: foodMap.name.toLowerCase(),
-              };
-            })
-            .filter((foodFilter: Food) =>
-              foodFilter.nameLowerCase.includes(searchValue.toLowerCase()),
-            ),
-        );
-        return;
-      }
-
-      if (selectedCategory !== undefined) {
-        setFoods(
-          foodsFormatted.filter(
-            (foodFilter: Food) => foodFilter.category === selectedCategory,
-          ),
-        );
-        return;
-      }
-
-      setFoods(foodsFormatted);
+      setFoods(
+        response.data.map((foodMap: Food) => {
+          return {
+            ...foodMap,
+            formattedPrice: formatValue(foodMap.price),
+          };
+        }),
+      );
     }
 
     loadFoods();
@@ -115,11 +94,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   function handleSelectCategory(id: number): void {
-    if (selectedCategory === undefined) {
-      setSelectedCategory(id);
-    } else {
-      setSelectedCategory(undefined);
-    }
+    setSelectedCategory(selectedCategory !== id ? id : undefined);
   }
 
   return (
