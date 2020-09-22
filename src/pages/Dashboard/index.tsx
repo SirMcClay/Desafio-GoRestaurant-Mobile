@@ -3,7 +3,7 @@ import { Image, ScrollView } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Feather';
 import {
-  createNavigatorFactory,
+  // createNavigatorFactory,
   useNavigation,
 } from '@react-navigation/native';
 import Logo from '../../assets/logo-header.png';
